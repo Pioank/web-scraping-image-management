@@ -20,19 +20,22 @@ import cloudinary.api
 import os
 import glob
 from selenium.webdriver.chrome.options import Options
+pd.set_option('display.max_columns', None) # Remove column display limit for Pandas
+driver = webdriver.Chrome(ChromeDriverManager().install())
 
-#files = glob.glob('C://Users//pkatidis//Desktop//pythonf//Scraping//screenshots//')
-#for f in files:
-#    os.remove(f)
+# Deleting locally the images that are saved from screenshots every time the script runs
+files = glob.glob('C://Users//USER//Desktop//...//screenshots//') #The screenshots folder is in this project
+for f in files:
+    os.remove(f)
 
-cloudinary.config(cloud_name = 'hnnyutwf8',api_key='596594341252844',api_secret = 'NU9RSqCd5_twxOEMXNMlWAKMoyo') #credentials for img upload cloudinary
+# Conntect to Cloudinary
+cloudinary.config(cloud_name = '',api_key='',api_secret = '') # Credentials for img upload cloudinary
 requests.packages.urllib3.disable_warnings()
-
-pd.set_option('display.max_columns', None)
 
 today = date.today()
 d1 = today.strftime("%d/%m/%Y")
 
+# Create lists to store the scraped data
 v1=list()
 v2=list()
 v3=list()
@@ -42,8 +45,7 @@ v6=list()
 v7=list()
 v8=list()
 
-driver = webdriver.Chrome(ChromeDriverManager().install())
-
+# Code below sets the Chrome driver to emulate mobile and clear Cache as well as set to Icognito
 mobile_emulation = {"deviceMetrics": { "width": 360, "height": 640, "pixelRatio": 3.0 }, "userAgent": "Mozilla/5.0 (Linux; Android 4.2.1; en-us; Nexus 5 Build/JOP40D) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166 Mobile Safari/535.19" }
 opts=Options()
 opts.set_capability("browser.cache.disk.enable", False)
@@ -54,15 +56,11 @@ opts.add_argument("--incognito")
 opts.add_experimental_option("mobileEmulation", mobile_emulation)
 driverr = webdriver.Chrome(ChromeDriverManager().install(),chrome_options = opts)
 
-
-
 urls = ['https://www.oddschecker.com/free-bets/free-bet-no-deposit','https://www.oddschecker.com/free-bets','https://www.oddschecker.com/bookie-offers','https://www.oddschecker.com/casino-bonus/free-spins-no-deposit','https://www.oddschecker.com/casino-bonus/live-casino','https://www.oddschecker.com/casino-bonus/new-casino','https://www.oddschecker.com/casino-bonus/mobile-casino','https://www.oddschecker.com/poker']
-#urls = ['https://www.oddschecker.com/casino-bonus/live-casino']
 
 x=0
 for url in urls:
-    driver.get(url)
-    
+    driver.get(url)  
 
     if url == 'https://www.oddschecker.com/free-bets/free-bet-no-deposit':
         product = 'Casino-No-Deposit'
@@ -79,7 +77,6 @@ for url in urls:
     else:
         product = 'Sports'
 
-    #time.sleep(2)
     promotit = driver.find_elements_by_xpath('//span[@class="offer-text beta-h2"]')
     promocomp = driver.find_elements_by_xpath('//div[@class="visit-bookie beta-caption4"]')
     promotc = driver.find_elements_by_xpath('//div[@class="nfb-details beta-caption4"]')
@@ -92,6 +89,7 @@ for url in urls:
     for z in promotit: 
         v1.append(str(z.text))
 
+    # Clean the data from this field and identify the company name
     for i in promocomp:
         promo = str(i.text)
         promo = promo.split("Visit ",1)[1]
@@ -129,7 +127,10 @@ for url in urls:
             urll = unquote(urll)
         else: 
             print('No Second decoding required')
-
+        
+        # This piece of code navigates to the final URL of click tracker, loads the page, takes a screenshot, saves it locally then pushes it to Cloudinary
+        # If not able to get the image screenshot then uses a fall back 404
+        # Images are stored as URLs from Cloudinary in the same data set as the other data points
         try:
             r = requests.get(urll,verify = False)
             r=r.url
@@ -138,7 +139,7 @@ for url in urls:
             driverr.get(r)
             time.sleep(10)
             name = str(v2[x]).replace(" ", "") + '-' + str(today.strftime("%d-%m-%Y")) + '-' + v6[x]
-            photfol = "C:\\Users\\pkatidis\\Desktop\\pythonf\\Scraping\\screenshots\\"+name+".png"
+            photfol = "C:\\Users\\USER\\Desktop\\screenshots\\"+name+".png"
             try:
                 driverr.save_screenshot(photfol)  
                 driverr.delete_all_cookies()    
@@ -159,10 +160,7 @@ for url in urls:
         x = x + 1
         v7.append(r)
         
-
-#fresult = list(zip(v1,v2,v3,v4,v5,v6,v7))
 fresult = list(zip(v1,v2,v3,v4,v5,v6,v7,v8))
-#ffresult = pd.DataFrame(fresult, columns=['Title','Company','T&Cs','Customer Type','Position','Product','Url'])
 ffresult = pd.DataFrame(fresult, columns=['Title','Company','T&Cs','Customer Type','Position','Product','Url','Photo'])
 ffresult = ffresult.drop_duplicates(subset=None, keep='first')
 ffresult['Date'] = d1
@@ -172,12 +170,13 @@ ffresult = ffresult.drop_duplicates(subset='Key', keep='first')
 
 print(ffresult)
 
-cnxn = pyodbc.connect("Driver={SQL Server};Server=SC1WNPRNDB003\\DPE_PROD;Database=DMSandbox;uid=WHGROUP\pkatidis;Trusted_Connection=yes;autocommit=False")
+#Connect to your database
+cnxn = pyodbc.connect("Driver={SQL Server};Server=;Database=;uid=;Trusted_Connection=yes;autocommit=False")
 cur = cnxn.cursor()
 
+# Try creating a table if one doesn't exist
 try:
-    #sql="""CREATE TABLE ODDSCHECKER (title varchar(300) NOT NULL, company varchar(100) NOT NULL, tcs varchar(900), [customer_type] varchar(10), position int(5) NOT NULL, [date] varchar(10) NOT NULL, [data_source] varchar(10),product varchar(20) NOT NULL,url varchar(20) NOT NULL, key varchar(900))"""
-    sql="""CREATE TABLE ODDSCPHOTO (title varchar(300) NOT NULL, company varchar(100) NOT NULL, tcs varchar(900), [customer_type] varchar(10), position int(5) NOT NULL, [date] varchar(10) NOT NULL, [data_source] varchar(10),product varchar(20) NOT NULL,url varchar(20) NOT NULL, photo varchar(100), key varchar(900))"""
+    sql="""CREATE TABLE tablename (title varchar(300) NOT NULL, company varchar(100) NOT NULL, tcs varchar(900), [customer_type] varchar(10), position int(5) NOT NULL, [date] varchar(10) NOT NULL, [data_source] varchar(10),product varchar(20) NOT NULL,url varchar(20) NOT NULL, photo varchar(100), key varchar(900))"""
     cur.execute(sql)
 except:
     print('table exists')
@@ -185,10 +184,9 @@ except:
 cur.commit()
 cur.close()
 
-engine = sa.create_engine('mssql+pyodbc://SC1WNPRNDB003\\DPE_PROD/DMSandbox?driver=SQL+Server+Native+Client+11.0')
-
-#ffresult.to_sql('ODDSCHECKER', engine, if_exists='replace', index = False)
-ffresult.to_sql('ODDSCPHOTO', engine, if_exists='replace', index = False)
+# Append new data to the existing one in your database
+engine = sa.create_engine('mssql+pyodbc:?driver=SQL+Server+Native+Client+11.0')
+ffresult.to_sql('tablename', engine, if_exists='replace', index = False)
 
 driver.quit()
 driverr.quit()
