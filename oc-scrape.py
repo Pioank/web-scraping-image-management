@@ -21,7 +21,7 @@ import os
 import glob
 from selenium.webdriver.chrome.options import Options
 pd.set_option('display.max_columns', None) # Remove column display limit for Pandas
-driver = webdriver.Chrome(ChromeDriverManager().install())
+driver = webdriver.Chrome(ChromeDriverManager().install()) # Installs latest Chrome driver
 
 # Deleting locally the images that are saved from screenshots every time the script runs
 files = glob.glob('C://Users//USER//Desktop//...//screenshots//') #The screenshots folder is in this project
@@ -56,6 +56,7 @@ opts.add_argument("--incognito")
 opts.add_experimental_option("mobileEmulation", mobile_emulation)
 driverr = webdriver.Chrome(ChromeDriverManager().install(),chrome_options = opts)
 
+# Create a list of the URLs you want to scrape - Note that these pages have all the same structure
 urls = ['https://www.oddschecker.com/free-bets/free-bet-no-deposit','https://www.oddschecker.com/free-bets','https://www.oddschecker.com/bookie-offers','https://www.oddschecker.com/casino-bonus/free-spins-no-deposit','https://www.oddschecker.com/casino-bonus/live-casino','https://www.oddschecker.com/casino-bonus/new-casino','https://www.oddschecker.com/casino-bonus/mobile-casino','https://www.oddschecker.com/poker']
 
 x=0
